@@ -64,8 +64,9 @@ function extractComposer()
 function command()
 {
     command:
-    set_time_limit(-1);
+    set_time_limit(900);
     putenv('COMPOSER_HOME=' . __DIR__ . '/extracted/bin/composer');
+    putenv('SYMFONY_ENV=prod');
     if(!file_exists($_POST['path']))
     {
         echo 'Invalid Path';
@@ -74,9 +75,21 @@ function command()
     if (file_exists('extracted'))
     {
         require_once(__DIR__ . '/extracted/vendor/autoload.php');
-        $input = new Symfony\Component\Console\Input\StringInput($_POST['command'].' -vvv -d '.$_POST['path']);
-	$output = new Symfony\Component\Console\Output\StreamOutput(fopen('php://output','w'));
+
+        $input = new Symfony\Component\Console\Input\ArrayInput(
+            array(
+                'command' => 'install',
+                '--working-dir' => __DIR__.'/../../',
+                '--no-dev' => true,
+                '--no-interaction' => true,
+                '--verbose' => true,
+                '--prefer-dist' => true,
+                '--optimize-autoloader' => true,
+            )
+        );
+        $output = new Symfony\Component\Console\Output\StreamOutput(fopen('php://output','w'));
         $app = new Composer\Console\Application();
+        $app->setAutoExit(false);
         $app->run($input,$output);
     }
     else
